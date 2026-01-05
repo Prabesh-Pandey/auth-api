@@ -1,2 +1,3 @@
-Auth api -- REST APIs
-JWT and bcrypt
+## Auth api -- REST APIs
+
+## JWT and bcrypt
