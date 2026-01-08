@@ -59,63 +59,93 @@ npm run dev
 
 **Scripts**
 
-- `start`: runs `node server.js`
-- `dev`: runs `nodemon server.js`
+# Auth API
 
-**Endpoints**
+Lightweight Express authentication service using JWT (access + refresh) and bcrypt.
 
-All endpoints are mounted under `/api/auth`.
+Overview
+
+- Routes mounted under `/api/auth` provide register, login and a protected profile endpoint.
+- Tokens: short-lived access token (`15m`) and refresh token (`7d`).
+
+Quick start
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create an environment file from the example and set secrets:
+
+```bash
+cp .env.example .env
+# edit .env and set secure values
+```
+
+3. Run the server:
+
+```bash
+npm start      # production
+npm run dev    # development (nodemon)
+```
+
+Environment variables
+
+- `MONGO_URI` — MongoDB connection string (required)
+- `JWT_ACCESS_SECRET` — secret for access tokens (required)
+- `JWT_REFRESH_SECRET` — secret for refresh tokens (required)
+- `PORT` — optional (default: `3000`)
+
+Endpoints
 
 - `POST /api/auth/register`
 
   - Body: `{ "email": "...", "password": "..." }`
-  - Response: `201` on success
+  - 201 Created on success
 
 - `POST /api/auth/login`
 
   - Body: `{ "email": "...", "password": "..." }`
-  - Response: `{ accessToken, refreshToken }` on success
+  - Response: `{ accessToken, refreshToken }`
 
 - `GET /api/auth/profile` (protected)
   - Header: `Authorization: Bearer <accessToken>`
-  - Response: `200` with `req.user` payload
+  - Response: `200` with user payload from token
 
-Example register:
+Examples
+
+Register:
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
-	-H "Content-Type: application/json" \
-	-d '{"email":"user@example.com","password":"s3cret"}'
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"s3cret"}'
 ```
 
-Example login:
+Login:
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
-	-H "Content-Type: application/json" \
-	-d '{"email":"user@example.com","password":"s3cret"}'
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"s3cret"}'
 ```
 
-**Notes & gotchas**
+Notes
 
-- The `password` field in the `User` model is defined with `select: false`. The login flow explicitly selects the password.
-- Make sure `.env` contains valid `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` before starting.
-- If MongoDB connection fails, check `MONGO_URI` and network/settings.
+- `models/user.js` sets `password` with `select: false`. Login explicitly selects the password field.
+- Ensure `.env` contains secure JWT secrets before running.
+- Consider adding input validation (e.g., `express-validator`), tests, and a logout/refresh flow for production.
 
-**Files of interest**
+Files of interest
 
-- `server.js` — starts the app and connects DB
-- `app.js` — mounts middleware and routes
-- `routes/authRoutes.js` — register/login/profile routes
-- `controllers/authController.js` — register/login implementation
-- `middleware/authMiddleware.js` — access token verification
-- `models/user.js` — user schema
+- `server.js` — app entry + DB connection
+- `app.js` — Express app, middleware, route mounting
+- `routes/authRoutes.js` — auth routes and protected `profile`
+- `controllers/authController.js` — register/login logic
+- `middleware/authMiddleware.js` — verifies access tokens
+- `models/user.js` — Mongoose schema
 
-**Next steps**
+License
 
-- Add input validation (e.g., `express-validator`) and tests.
-- Implement refresh token rotation and logout endpoint.
-
----
-
-See `.env.example` for required environment variables.
+Check project owner preferences. (No license included by default.)
