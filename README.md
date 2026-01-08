@@ -22,81 +22,65 @@ Small Express-based authentication service using JWT and bcrypt.
 
 Set the following in a `.env` file or environment:
 
-- `MONGO_URI` — MongoDB connection string.
-- `JWT_ACCESS_SECRET` — secret for access tokens.
-- `JWT_REFRESH_SECRET` — secret for refresh tokens.
-- `PORT` — optional, defaults to `3000`.
-
-## How to run
-
-Install and start:
-
-```bash
-npm install
-npm start
-```
-
-For development with auto-reload:
-
 # Auth API
 
-Small Express-based authentication service demonstrating JWT access/refresh tokens and password hashing with bcrypt.
+Simple Express authentication API using JWT (access + refresh) and bcrypt password hashing.
 
-## What’s implemented
+**Prerequisites**
 
-- `app.js` — Express app with `helmet()` and JSON body parsing (routes are not mounted by default).
-- `server.js` — Loads environment, connects to MongoDB via `config/db.js`, and starts the server.
-- `config/db.js` — MongoDB connection helper (reads `MONGO_URI`).
-- `models/user.js` — Mongoose `User` model with `email`, `password` (not selected by default), `role`, and `refreshToken`.
-- `utils/hash.js` — `hashPassword` and `comparePassword` using `bcrypt`.
-- `utils/jwt.js` — `generateAccessToken` and `generateRefreshToken` using `jsonwebtoken`.
-- `controllers/authController.js` — `register` and `login` controllers (some bugs present; see Known issues).
-- `routes/authRoutes.js` — Express router with `POST /register` and `POST /login`.
-- `middleware/authMiddleware.js` — Token authentication middleware that verifies access tokens and sets `req.user`.
+- Node.js 18+ and npm
+- MongoDB instance (local or cloud)
 
-## Available endpoints
-
-- `POST /register` — register a new user. Body: `{ "email": "...", "password": "..." }`.
-- `POST /login` — login and receive `{ accessToken, refreshToken }`. Body: `{ "email": "...", "password": "..." }`.
-
-Note: The `routes/authRoutes.js` file exists but is not currently mounted in `app.js`. To enable the endpoints, add the following to `app.js`:
-
-```js
-const authRoutes = require("./routes/authRoutes");
-app.use("/api/auth", authRoutes);
-```
-
-This will expose the endpoints at `/api/auth/register` and `/api/auth/login`.
-
-## Environment variables
-
-Create a `.env` file at the project root with the following values:
-
-- `MONGO_URI` — MongoDB connection string (required).
-- `JWT_ACCESS_SECRET` — secret for access tokens (required).
-- `JWT_REFRESH_SECRET` — secret for refresh tokens (required).
-- `PORT` — optional, defaults to `3000`.
-
-## Installation & Run
-
-Install dependencies and start the server:
+**Install**
 
 ```bash
 npm install
-npm start
 ```
 
-For development with auto-reload:
+**Environment**
+
+Copy the example file and set real secrets:
+
+```bash
+cp .env.example .env
+# edit .env with secure secrets
+```
+
+- `MONGO_URI` — MongoDB connection string
+- `JWT_ACCESS_SECRET` — secret for access tokens
+- `JWT_REFRESH_SECRET` — secret for refresh tokens
+- `PORT` — optional (default: `3000`)
+
+**Run**
 
 ```bash
 npm run dev
 ```
 
-Server default listens on the `PORT` env var or `3000`.
+**Scripts**
 
-## Example requests
+- `start`: runs `node server.js`
+- `dev`: runs `nodemon server.js`
 
-Register:
+**Endpoints**
+
+All endpoints are mounted under `/api/auth`.
+
+- `POST /api/auth/register`
+
+  - Body: `{ "email": "...", "password": "..." }`
+  - Response: `201` on success
+
+- `POST /api/auth/login`
+
+  - Body: `{ "email": "...", "password": "..." }`
+  - Response: `{ accessToken, refreshToken }` on success
+
+- `GET /api/auth/profile` (protected)
+  - Header: `Authorization: Bearer <accessToken>`
+  - Response: `200` with `req.user` payload
+
+Example register:
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/register \
@@ -104,7 +88,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 	-d '{"email":"user@example.com","password":"s3cret"}'
 ```
 
-Login:
+Example login:
 
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
@@ -112,38 +96,26 @@ curl -X POST http://localhost:3000/api/auth/login \
 	-d '{"email":"user@example.com","password":"s3cret"}'
 ```
 
-## Known issues & required fixes
+**Notes & gotchas**
 
-1. `controllers/authController.js` contains a few bugs that will prevent the app from running as-is:
+- The `password` field in the `User` model is defined with `select: false`. The login flow explicitly selects the password.
+- Make sure `.env` contains valid `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` before starting.
+- If MongoDB connection fails, check `MONGO_URI` and network/settings.
 
-   - It requires `../models/User` (capital `U`) but the model file is `models/user.js`. Change to `require('../models/user')` or export with matching name.
-   - In `register`, the code calls `user.findOne(...)` but the model is `User` — replace `user` with `User`.
-   - The code sometimes mixes `user` vs `User` when saving/creating. Ensure consistent use of the `User` variable from the required model.
+**Files of interest**
 
-2. `app.js` does not mount `routes/authRoutes.js`. Add the `app.use('/api/auth', authRoutes)` line (see above) to expose endpoints.
+- `server.js` — starts the app and connects DB
+- `app.js` — mounts middleware and routes
+- `routes/authRoutes.js` — register/login/profile routes
+- `controllers/authController.js` — register/login implementation
+- `middleware/authMiddleware.js` — access token verification
+- `models/user.js` — user schema
 
-3. `utils/jwt.js` and `middleware/authMiddleware.js` expect `JWT_ACCESS_SECRET`/`JWT_REFRESH_SECRET` to be set. Ensure `.env` includes them before starting.
+**Next steps**
 
-4. `models/user.js` sets `password.select = false`, so when comparing passwords you must explicitly select the password field in queries like `User.findOne({ email }).select('+password')`.
+- Add input validation (e.g., `express-validator`) and tests.
+- Implement refresh token rotation and logout endpoint.
 
-5. There are no tests or input validation. Add request validation and unit tests before production use.
+---
 
-# Auth API
-
-Minimal placeholder README — will be updated when the project is complete.
-
-## Quick start
-
-Install and run:
-
-```bash
-npm install
-npm start
-```
-
-## Environment
-
-- `MONGO_URI` (required)
-- `JWT_ACCESS_SECRET` (required)
-- `JWT_REFRESH_SECRET` (required)
-- `PORT` (optional, default: 3000)
+See `.env.example` for required environment variables.
