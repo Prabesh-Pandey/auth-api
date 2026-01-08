@@ -145,7 +145,3 @@ Files of interest
 - `controllers/authController.js` — register/login logic
 - `middleware/authMiddleware.js` — verifies access tokens
 - `models/user.js` — Mongoose schema
-
-License
-
-Check project owner preferences. (No license included by default.)
